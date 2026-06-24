@@ -42,12 +42,12 @@ export default class OllamaProvider extends AIProvider {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/generate`, {
+      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           model: this.modelName,
-          prompt: fullPrompt,
+          messages: [{ role: 'user', content: fullPrompt }],
           stream: false
         })
       });
@@ -56,7 +56,7 @@ export default class OllamaProvider extends AIProvider {
         let errorMsg = response.statusText;
         try {
           const errorData = await response.json();
-          if (errorData.error) errorMsg = errorData.error;
+          if (errorData.error) errorMsg = errorData.error.message || errorData.error;
         } catch (e) {
           // ignore
         }
@@ -64,7 +64,7 @@ export default class OllamaProvider extends AIProvider {
       }
 
       const data = await response.json();
-      return data.response || '';
+      return data.choices[0].message.content || '';
     } catch (err) {
       if (err.message.includes('Failed to fetch')) {
         throw new Error(`Could not connect to Ollama at ${this.baseUrl}. Please ensure Ollama is running and CORS is configured if necessary.`);
