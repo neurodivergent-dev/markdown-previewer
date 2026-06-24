@@ -9,3 +9,8 @@
   from = "/*"
   to = "/index.html"
   status = 200
+[[redirects]]
+  from = "/ollama-api/*"
+  to = "https://ollama.com/:splat"
+  status = 200
+  force = true
