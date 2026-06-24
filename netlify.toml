@@ -7,7 +7,7 @@
 
 [[redirects]]
   from = "/ollama-api/*"
-  to = "https://api.ollama.cloud/:splat"
+  to = "https://ollama.com/:splat"
   status = 200
   force = true
 

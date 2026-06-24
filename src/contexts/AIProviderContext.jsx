@@ -17,13 +17,13 @@ export const AIProviderProvider = ({ children }) => {
       },
       urls: {
         'ollama-local': 'http://localhost:11434',
-        'ollama-cloud': '',
+        'ollama-cloud': 'https://ollama.com',
       },
       models: {
         gemini: 'gemini-2.5-flash',
         groq: 'llama3-8b-8192',
         'ollama-local': 'llama3',
-        'ollama-cloud': 'llama3',
+        'ollama-cloud': 'gemma4:31b-cloud',
       }
     };
   });

@@ -208,10 +208,10 @@ const AIProviderSettingsModal = ({ isOpen, onClose, darkMode }) => {
                   type="text"
                   value={localConfig.urls['ollama-cloud'] || ''}
                   onChange={(e) => handleUrlChange('ollama-cloud', e.target.value)}
-                  placeholder="https://your-remote-ollama.com"
+                  placeholder="https://ollama.com"
                   className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:border-blue-500`}
                 />
-                <p className={`text-xs mt-2 mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Your remote Ollama API URL.</p>
+                <p className={`text-xs mt-2 mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Ollama cloud: <code>https://ollama.com</code> — API key from ollama.com/settings/keys</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -229,12 +229,12 @@ const AIProviderSettingsModal = ({ isOpen, onClose, darkMode }) => {
                   <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Model</label>
                   <input
                     type="text"
-                    value={localConfig.models?.['ollama-cloud'] || 'llama3'}
+                    value={localConfig.models?.['ollama-cloud'] || 'gemma4:31b-cloud'}
                     onChange={(e) => handleModelChange('ollama-cloud', e.target.value)}
-                    placeholder="e.g. llama3, mistral"
+                    placeholder="e.g. gemma4:31b-cloud, gemma4:12b"
                     className={`w-full px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:border-blue-500`}
                   />
-                  <p className={`text-xs mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Name of the remote model.</p>
+                  <p className={`text-xs mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Cloud models use <code>-cloud</code> suffix (e.g. gemma4:31b-cloud).</p>
                 </div>
               </div>
             </div>

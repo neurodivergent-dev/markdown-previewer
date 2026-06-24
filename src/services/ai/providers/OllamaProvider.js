@@ -6,9 +6,9 @@ export default class OllamaProvider extends AIProvider {
     // Default to localhost if empty
     let url = baseUrl ? baseUrl.replace(/\/$/, '') : 'http://localhost:11434';
     
-    // Transparently rewrite ollama.com to our local proxy to bypass CORS
+    // Rewrite ollama.com to the current origin's Netlify proxy to bypass CORS
     if (url === 'https://ollama.com' && isCloud) {
-      url = '/ollama-api';
+      url = `${window.location.origin}/ollama-api`;
     }
 
     this.baseUrl = url;
