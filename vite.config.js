@@ -6,6 +6,13 @@ export default defineConfig({
   server: {
     host: true, // Ağdaki tüm cihazlardan erişilebilir
     port: 5173,
+    proxy: {
+      '/ollama-api': {
+        target: 'https://ollama.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ollama-api/, ''),
+      }
+    }
   },
   plugins: [
     react(),

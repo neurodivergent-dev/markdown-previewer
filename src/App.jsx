@@ -3,7 +3,8 @@ import MarkdownEditor from "./components/MarkdownEditor";
 import MarkdownPreview from "./components/MarkdownPreview";
 import Toolbar from "./components/Toolbar";
 import Settings from "./components/Settings";
-import GeminiAssistant from "./components/GeminiAssistant";
+import AIAssistant from "./components/AIAssistant";
+import AIProviderSettingsModal from "./components/AIProviderSettingsModal";
 import KeyboardShortcutsPanel from "./components/KeyboardShortcutsPanel";
 import ThemeCustomizer from "./components/ThemeCustomizer";
 import VersionHistory from "./components/VersionHistory";
@@ -114,6 +115,7 @@ function App() {
 
   // AI Assistant state
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [isAISettingsOpen, setIsAISettingsOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const editorRef = useRef(null);
   
@@ -815,13 +817,21 @@ function App() {
         </div>
       </main>
 
-      {/* Gemini AI Assistant Modal */}
-      <GeminiAssistant
+      {/* AI Assistant Modal */}
+      <AIAssistant
         isOpen={isAIOpen}
         onClose={() => setIsAIOpen(false)}
         selectedText={selectedText}
         markdown={markdown}
         onInsertText={handleInsertAIText}
+        darkMode={isDark}
+        onOpenSettings={() => setIsAISettingsOpen(true)}
+      />
+
+      {/* AI Provider Settings Modal */}
+      <AIProviderSettingsModal
+        isOpen={isAISettingsOpen}
+        onClose={() => setIsAISettingsOpen(false)}
         darkMode={isDark}
       />
 

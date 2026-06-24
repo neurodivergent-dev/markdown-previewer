@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import AIManager from '../services/ai/AIManager';
+import { useAIProvider } from '../contexts/AIProviderContext';
 import {
   SparklesIcon,
   XMarkIcon,
@@ -12,16 +13,17 @@ import {
   DocumentTextIcon,
   ArrowsPointingOutIcon,
   ExclamationCircleIcon,
+  Cog8ToothIcon,
 } from '@heroicons/react/24/outline';
 
-const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText, darkMode }) => {
+const AIAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText, darkMode, onOpenSettings }) => {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  const { config } = useAIProvider();
 
   // Use selectedText if available, otherwise use full markdown
   const textToProcess = selectedText || markdown;
@@ -72,29 +74,18 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
     },
   ];
 
-  const callGeminiAPI = async (prompt, text) => {
-    if (!API_KEY) {
-      setError('API key not found. Please add VITE_GEMINI_API_KEY to your .env file.');
-      return;
-    }
-
+  const callAIProvider = async (prompt, text) => {
     setLoading(true);
     setError('');
     setResult('');
 
     try {
-      const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-      const fullPrompt = prompt + text;
-      const result = await model.generateContent(fullPrompt);
-      const response = await result.response;
-      const generatedText = response.text();
-
+      const aiManager = new AIManager(config.activeProvider, config);
+      const generatedText = await aiManager.generateContent(prompt, text);
       setResult(generatedText);
     } catch (err) {
-      console.error('Gemini API Error:', err);
-      setError(err.message || 'Failed to generate content. Please check your API key and try again.');
+      console.error('AI API Error:', err);
+      setError(err.message || 'Failed to generate content. Please check your provider settings and try again.');
     } finally {
       setLoading(false);
     }
@@ -105,7 +96,7 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
       setError('No text available to process.');
       return;
     }
-    callGeminiAPI(action.prompt, textToProcess);
+    callAIProvider(action.prompt, textToProcess);
   };
 
   const handleCustomPrompt = () => {
@@ -118,7 +109,7 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
       return;
     }
     const enhancedPrompt = customPrompt + '\n\nIMPORTANT: Start directly with the content. Do not begin with meta-commentary like "Here is", "Sure", "Okay", "Tamam, işte" or similar phrases.\n\n';
-    callGeminiAPI(enhancedPrompt, textToProcess);
+    callAIProvider(enhancedPrompt, textToProcess);
   };
 
   const handleCopy = () => {
@@ -145,6 +136,13 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
 
   if (!isOpen) return null;
 
+  const providerNames = {
+    'gemini': 'Google Gemini',
+    'groq': 'Groq',
+    'ollama-local': 'Ollama (Local)',
+    'ollama-cloud': 'Ollama (Cloud)'
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex sm:items-center sm:justify-center sm:p-4 bg-black bg-opacity-50 backdrop-blur-sm"
@@ -162,8 +160,13 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
         }`}>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <SparklesIcon className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 flex-shrink-0" />
-            <div className="min-w-0">
-              <h2 className="text-lg sm:text-2xl font-bold truncate">Gemini AI Assistant</h2>
+            <div className="min-w-0 flex flex-col">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-2xl font-bold truncate">AI Assistant</h2>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${darkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-gray-300 bg-gray-100 text-gray-600'}`}>
+                  {providerNames[config.activeProvider] || config.activeProvider}
+                </span>
+              </div>
               <p className={`text-xs sm:text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {selectedText
                   ? `${selectedText.length} characters selected`
@@ -173,15 +176,27 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${
-              darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-            }`}
-            aria-label="Close AI Assistant"
-          >
-            <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={onOpenSettings}
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${
+                darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+              }`}
+              aria-label="Open AI Settings"
+              title="AI Settings"
+            >
+              <Cog8ToothIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+            <button
+              onClick={onClose}
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Close AI Assistant"
+            >
+              <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -201,8 +216,8 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
                     disabled={loading}
                     className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg border-2 transition-all ${
                       darkMode
-                        ? 'border-gray-700 hover:border-purple-500 hover:bg-gray-700'
-                        : 'border-gray-200 hover:border-purple-500 hover:bg-purple-50'
+                        ? `border-gray-700 hover:border-${action.color}-500 hover:bg-gray-700`
+                        : `border-gray-200 hover:border-${action.color}-500 hover:bg-${action.color}-50`
                     } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <Icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${action.color}-500 flex-shrink-0`} />
@@ -257,7 +272,7 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
           {loading && (
             <div className="flex items-center justify-center gap-2 sm:gap-3 p-6 sm:p-8">
               <ArrowPathIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500 animate-spin" />
-              <p className={`text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Generating with Gemini AI...</p>
+              <p className={`text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Generating with {providerNames[config.activeProvider]}...</p>
             </div>
           )}
 
@@ -305,13 +320,14 @@ const GeminiAssistant = ({ isOpen, onClose, selectedText, markdown, onInsertText
   );
 };
 
-GeminiAssistant.propTypes = {
+AIAssistant.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   selectedText: PropTypes.string,
   markdown: PropTypes.string,
   onInsertText: PropTypes.func.isRequired,
   darkMode: PropTypes.bool.isRequired,
+  onOpenSettings: PropTypes.func.isRequired,
 };
 
-export default GeminiAssistant;
+export default AIAssistant;
