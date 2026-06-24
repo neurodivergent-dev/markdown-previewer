@@ -53,7 +53,14 @@ export default class OllamaProvider extends AIProvider {
       });
 
       if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.statusText}`);
+        let errorMsg = response.statusText;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) errorMsg = errorData.error;
+        } catch (e) {
+          // ignore
+        }
+        throw new Error(`Ollama API error: ${errorMsg || response.status}`);
       }
 
       const data = await response.json();
