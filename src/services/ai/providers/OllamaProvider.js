@@ -41,8 +41,13 @@ export default class OllamaProvider extends AIProvider {
       headers['Authorization'] = `Bearer ${this.apiKey}`;
     }
 
+    // Cloud uses native /api/chat; local uses OpenAI-compat /v1/chat/completions
+    const endpoint = this.isCloud
+      ? `${this.baseUrl}/api/chat`
+      : `${this.baseUrl}/v1/chat/completions`;
+
     try {
-      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -53,18 +58,21 @@ export default class OllamaProvider extends AIProvider {
       });
 
       if (!response.ok) {
-        let errorMsg = response.statusText;
+        let errorMsg = `${response.status}`;
         try {
           const errorData = await response.json();
           if (errorData.error) errorMsg = errorData.error.message || errorData.error;
         } catch (e) {
           // ignore
         }
-        throw new Error(`Ollama API error: ${errorMsg || response.status}`);
+        throw new Error(`Ollama API error: ${errorMsg}`);
       }
 
       const data = await response.json();
-      return data.choices[0].message.content || '';
+      // Native /api/chat returns data.message.content; OpenAI compat returns data.choices[0].message.content
+      return this.isCloud
+        ? (data.message?.content || '')
+        : (data.choices[0].message.content || '');
     } catch (err) {
       if (err.message.includes('Failed to fetch')) {
         throw new Error(`Could not connect to Ollama at ${this.baseUrl}. Please ensure Ollama is running and CORS is configured if necessary.`);
